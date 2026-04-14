@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>IMPERIAL VOX — CODEX ASTARTES</title>
+<style>
+  /* ── FONTS ──────────────────────────────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  /* ── VARIABLES ──────────────────────────────────────────────── */
+  :root {
+    --blood:    #8B0000;
+    --blood-lt: #B22222;
+    --gold:     #D4AF37;
+    --gold-dk:  #9A7B1C;
+    --bone:     #E8DCC8;
+    --bone-dk:  #C9BAA0;
+    --black:    #0A0704;
+    --panel:    #110C08;
+    --panel2:   #1A1208;
+    --glow:     rgba(212,175,55,0.35);
+    --glow-red: rgba(139,0,0,0.5);
+    --safe-t:   env(safe-area-inset-top, 0px);
+    --safe-b:   env(safe-area-inset-bottom, 0px);
+    --safe-l:   env(safe-area-inset-left, 0px);
+    --safe-r:   env(safe-area-inset-right, 0px);
+  }
+
+  /* ── RESET ──────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--black);
+    color: var(--bone);
+    font-family: 'Share Tech Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  /* ── BACKGROUND TEXTURE ─────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.18) 2px,
+        rgba(0,0,0,0.18) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(139,0,0,0.03) 40px,
+        rgba(139,0,0,0.03) 41px
+      ),
+      radial-gradient(ellipse at 50% 0%, rgba(139,0,0,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse at 50% 100%, rgba(30,10,5,0.8) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────────────────── */
+  #app {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    padding:
+      calc(var(--safe-t) + 4px)
+      calc(var(--safe-r) + 10px)
+      calc(var(--safe-b) + 0px)
+      calc(var(--safe-l) + 10px);
+  }
+
+  /* ── ACTIVATION OVERLAY ─────────────────────────────────────── */
+  #overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.93);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px;
+    transition: opacity 0.4s;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .overlay-cog {
+    font-size: 64px;
+    animation: spinCog 8s linear infinite;
+    filter: drop-shadow(0 0 12px var(--gold));
+    color: var(--gold);
+  }
+  @keyframes spinCog { to { transform: rotate(360deg); } }
+
+  .overlay-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(18px, 5vw, 28px);
+    font-weight: 900;
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 20px var(--gold);
+    padding: 0 20px;
+  }
+  .overlay-sub {
+    font-size: 13px;
+    color: var(--bone-dk);
+    letter-spacing: 0.1em;
+    text-align: center;
+    padding: 0 30px;
+    line-height: 1.6;
+  }
+  #activateBtn {
+    padding: 16px 40px;
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    background: var(--blood);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    border-radius: 2px;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 0 20px var(--glow-red), inset 0 0 10px rgba(0,0,0,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  #activateBtn:active { transform: scale(0.97); box-shadow: 0 0 8px var(--glow-red); }
+
+  /* ── HEADER ─────────────────────────────────────────────────── */
+  header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0 6px;
+    border-bottom: 1px solid var(--gold-dk);
+    flex-shrink: 0;
+  }
+  .header-icon { font-size: 22px; color: var(--gold); flex-shrink: 0; }
+  .header-titles { flex: 1; min-width: 0; }
+  .header-main {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(11px, 3.5vw, 16px);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 8px var(--glow);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .header-sub {
+    font-size: 9px;
+    color: var(--bone-dk);
+    letter-spacing: 0.18em;
+    opacity: 0.7;
+  }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .status-dot.active { background: #00ff44; box-shadow: 0 0 8px #00ff44; }
+  .status-dot.error  { background: var(--blood-lt); box-shadow: 0 0 8px var(--blood-lt); }
+
+  /* ── VISUALIZER ─────────────────────────────────────────────── */
+  #vizSection {
+    flex-shrink: 0;
+    padding: 8px 0 4px;
+  }
+  #vizCanvas {
+    width: 100%;
+    height: 64px;
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.5);
+    display: block;
+    will-change: transform; /* GPU hint only on animating element */
+  }
+  .meter-row {
+    display: flex; gap: 8px; margin-top: 6px;
+  }
+  .meter-block {
+    flex: 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(212,175,55,0.15);
+    border-radius: 2px;
+    padding: 4px 6px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--bone-dk);
+  }
+  .meter-label { margin-bottom: 3px; }
+  .meter-bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .meter-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 1px;
+    transition: width 0.06s linear;
+  }
+  #inMeterFill  { background: linear-gradient(90deg, var(--blood), var(--blood-lt)); }
+  #outMeterFill { background: linear-gradient(90deg, var(--gold-dk), var(--gold)); }
+
+  /* ── SCROLLABLE CONTROLS ─────────────────────────────────────── */
+  #controls {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 6px 0;
+  }
+  #controls::-webkit-scrollbar { width: 3px; }
+  #controls::-webkit-scrollbar-track { background: transparent; }
+  #controls::-webkit-scrollbar-thumb { background: var(--gold-dk); border-radius: 2px; }
+
+  /* ── SECTION HEADERS ─────────────────────────────────────────── */
+  .section-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 0 6px;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .section-head::before, .section-head::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3));
+  }
+  .section-head::after {
+    background: linear-gradient(90deg, rgba(212,175,55,0.3), transparent);
+  }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+    text-shadow: 0 0 6px var(--glow);
+  }
+  .section-body { overflow: hidden; transition: max-height 0.3s ease; }
+  .section-body.collapsed { max-height: 0 !important; }
+
+  /* ── SLIDER ROWS ─────────────────────────────────────────────── */
+  .slider-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(212,175,55,0.06);
+  }
+  .slider-label {
+    font-size: 10px;
+    color: var(--bone-dk);
+    letter-spacing: 0.08em;
+    width: 82px;
+    flex-shrink: 0;
+  }
+  .slider-wrap { flex: 1; position: relative; height: 44px; display: flex; align-items: center; }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 44px; /* touch area */
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: rgba(212,175,55,0.2);
+    border-radius: 2px;
+    border: 1px solid rgba(212,175,55,0.1);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--blood);
+    box-shadow: 0 0 8px var(--glow);
+    margin-top: -9px;
+  }
+  input[type=range]::-moz-range-track {
+    height: 4px;
+    background: rgba(212,175,55,0.2);
+    border-radius: 2px;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--blood);
+    box-shadow: 0 0 8px var(--glow);
+  }
+  .slider-val {
+    font-size: 11px;
+    color: var(--gold);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── TOGGLE ROWS ─────────────────────────────────────────────── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(212,175,55,0.06);
+  }
+  .toggle-label { font-size: 11px; color: var(--bone-dk); letter-spacing: 0.08em; }
+  .toggle-sub   { font-size: 9px; color: rgba(200,186,160,0.5); letter-spacing: 0.06em; }
+  .rune-toggle {
+    position: relative;
+    width: 52px; height: 28px;
+    cursor: pointer;
+    touch-action: manipulation;
+    flex-shrink: 0;
+  }
+  .rune-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .rune-track {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(212,175,55,0.25);
+    border-radius: 2px;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .rune-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: var(--bone-dk);
+    border-radius: 1px;
+    transition: transform 0.2s, background 0.2s;
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--black);
+  }
+  .rune-toggle input:checked ~ .rune-track {
+    background: rgba(139,0,0,0.6);
+    border-color: var(--gold);
+    box-shadow: 0 0 10px var(--glow-red);
+  }
+  .rune-toggle input:checked ~ .rune-thumb {
+    transform: translateX(24px);
+    background: var(--gold);
+  }
+
+  /* ── BUTTON GRID ─────────────────────────────────────────────── */
+  .btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .btn-grid.tri { grid-template-columns: 1fr 1fr 1fr; }
+
+  .grim-btn {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 10px 8px;
+    background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%);
+    border: 1px solid rgba(212,175,55,0.25);
+    border-bottom: 2px solid var(--gold-dk);
+    border-radius: 2px;
+    color: var(--bone);
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-align: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s, box-shadow 0.08s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .grim-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.06), transparent);
+    transition: left 0.4s;
+  }
+  .grim-btn:active::before { left: 150%; }
+  .grim-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 4px rgba(0,0,0,0.8), inset 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .grim-btn.active-effect {
+    border-color: var(--gold);
+    box-shadow: 0 0 12px var(--glow), 0 0 4px var(--glow-red), inset 0 0 6px rgba(139,0,0,0.3);
+    color: var(--gold);
+  }
+  .grim-btn .btn-icon { font-size: 20px; }
+  .grim-btn .btn-sub  { font-size: 8px; color: var(--bone-dk); letter-spacing: 0.08em; font-family: 'Share Tech Mono', monospace; font-weight: 400; }
+
+  /* ── MIC BUTTON (main) ───────────────────────────────────────── */
+  #micToggle {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    background: linear-gradient(180deg, var(--blood) 0%, #5a0000 100%);
+    border: 2px solid var(--gold-dk);
+    border-radius: 2px;
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 0 16px var(--glow-red), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  #micToggle:active { transform: scale(0.98); }
+  #micToggle.mic-active {
+    background: linear-gradient(180deg, #3a0000 0%, #1a0000 100%);
+    box-shadow: 0 0 6px var(--glow-red);
+  }
+  .mic-icon { font-size: 20px; }
+
+  /* ── FOOTER ──────────────────────────────────────────────────── */
+  footer {
+    flex-shrink: 0;
+    padding: 8px 0 calc(var(--safe-b) + 8px);
+    border-top: 1px solid rgba(212,175,55,0.12);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .footer-phrase {
+    font-size: 10px;
+    color: var(--bone-dk);
+    letter-spacing: 0.12em;
+    text-align: center;
+    opacity: 0.6;
+    min-height: 14px;
+    font-style: italic;
+    transition: opacity 0.3s;
+  }
+
+  /* ── GLITCH OVERLAY ──────────────────────────────────────────── */
+  #glitchOverlay {
+    position: fixed; inset: 0; z-index: 500;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .glitch-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: rgba(139,0,0,0.7);
+    animation: glitchFlicker 0.08s steps(1) forwards;
+  }
+  @keyframes glitchFlicker {
+    0%   { opacity: 1; }
+    50%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  /* ── STATUS MSG ──────────────────────────────────────────────── */
+  #statusMsg {
+    font-size: 10px;
+    text-align: center;
+    letter-spacing: 0.1em;
+    color: var(--bone-dk);
+    padding: 4px 0;
+    min-height: 18px;
+    opacity: 0.7;
+  }
+  #statusMsg.err { color: var(--blood-lt); opacity: 1; }
+
+  /* ── PURITY SEAL DECORATION ───────────────────────────────────── */
+  .seal-divider {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0;
+  }
+  .seal-line { flex: 1; height: 1px; background: rgba(212,175,55,0.12); }
+  .seal-icon { font-size: 12px; color: rgba(212,175,55,0.3); }
+
+  /* ── PITCH DISPLAY ───────────────────────────────────────────── */
+  .freq-display {
+    display: flex; gap: 6px; padding: 4px 0;
+  }
+  .freq-chip {
+    flex: 1; text-align: center;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(212,175,55,0.12);
+    border-radius: 2px;
+    padding: 4px 2px;
+    font-size: 9px;
+    color: var(--bone-dk);
+  }
+  .freq-chip span { display: block; font-size: 12px; color: var(--gold); }
+
+  /* ── BLUETOOTH STATUS BAR ────────────────────────────────────── */
+  #btBar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 6px;
+    margin-top: 4px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(212,175,55,0.1);
+    border-radius: 2px;
+    font-size: 9px;
+    letter-spacing: 0.09em;
+    color: var(--bone-dk);
+  }
+  #btIcon {
+    font-size: 13px;
+    transition: filter 0.3s;
+  }
+  #btIcon.bt-active  { filter: drop-shadow(0 0 5px #4fc3f7); }
+  #btIcon.bt-warning { filter: drop-shadow(0 0 5px var(--blood-lt)); animation: btPulse 1s ease-in-out infinite; }
+  @keyframes btPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #btDevName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #btWarnMsg {
+    display: none;
+    font-size: 9px; color: var(--blood-lt);
+    letter-spacing: 0.08em;
+    padding: 3px 6px;
+    border: 1px solid rgba(178,34,34,0.4);
+    border-radius: 2px;
+    background: rgba(139,0,0,0.2);
+    line-height: 1.5;
+  }
+  #btWarnMsg.visible { display: block; }
+
+  /* ── TECH-PRIEST SECTION ─────────────────────────────────────── */
+  .diag-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(212,175,55,0.06);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    color: var(--bone-dk);
+  }
+  .diag-val { color: var(--gold); font-size: 10px; }
+  .diag-steps {
+    font-size: 9px;
+    color: rgba(200,186,160,0.55);
+    letter-spacing: 0.06em;
+    line-height: 1.7;
+    padding: 6px 0 4px;
+    border-bottom: 1px solid rgba(212,175,55,0.06);
+  }
+
+  /* ── PREFERS DARK (bonus) ─────────────────────────────────────── */
+  @media (prefers-color-scheme: light) {
+    /* stays dark — WH40k is always grimdark */
+  }
+
+  /* ── NO HOVER ON TOUCH (prevents sticky hover on mobile) ─────── */
+  @media (hover: none) {
+    .grim-btn:hover { background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ░░ ACTIVATION OVERLAY ░░ -->
+<div id="overlay">
+  <div class="overlay-cog">⚙</div>
+  <div class="overlay-title">IMPERIAL VOX<br>CODEX ASTARTES</div>
+  <div class="overlay-sub">
+    Initialise machine spirit communion.<br>
+    Vox-unit requires tactile activation.
+  </div>
+  <button id="activateBtn">⚙ ACTIVATE VOX-UNIT ⚙</button>
+</div>
+
+<!-- ░░ GLITCH OVERLAY ░░ -->
+<div id="glitchOverlay"></div>
+
+<!-- ░░ APP ░░ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-icon">⚙</div>
+    <div class="header-titles">
+      <div class="header-main">IMPERIAL VOX · CODEX ASTARTES</div>
+      <div class="header-sub">ADEPTUS MECHANICUS · VOX-RELAY UNIT MK.IV</div>
+    </div>
+    <div class="status-dot" id="statusDot"></div>
+  </header>
+
+  <!-- VISUALIZER -->
+  <div id="vizSection">
+    <canvas id="vizCanvas"></canvas>
+    <div class="meter-row">
+      <div class="meter-block">
+        <div class="meter-label">INPUT SIGNAL</div>
+        <div class="meter-bar-track"><div class="meter-bar-fill" id="inMeterFill"></div></div>
+      </div>
+      <div class="meter-block">
+        <div class="meter-label">VOX OUTPUT</div>
+        <div class="meter-bar-track"><div class="meter-bar-fill" id="outMeterFill"></div></div>
+      </div>
+    </div>
+    <div class="freq-display">
+      <div class="freq-chip">CARRIER<span id="freqDisp">—</span></div>
+      <div class="freq-chip">BANDS<span id="bandDisp">12</span></div>
+      <div class="freq-chip">LATENCY<span id="latDisp">—</span></div>
+    </div>
+
+    <!-- BT: Audio output device indicator -->
+    <div id="btBar">
+      <span id="btIcon">🔊</span>
+      <span id="btDevName">PHONE SPEAKER</span>
+      <span id="btSampleRate" style="opacity:0.4; font-size:8px;"></span>
+    </div>
+    <div id="btWarnMsg">
+      ⚠ VOX SILENT ON BLESSED SPEAKER — RECITE RECONNECT LITANY
+    </div>
+  </div>
+
+  <div id="statusMsg">MACHINE SPIRIT DORMANT</div>
+
+  <!-- CONTROLS -->
+  <div id="controls">
+
+    <!-- ── VOX PROCESSING ── -->
+    <div class="section-head" onclick="toggleSection('voxSec')">
+      <span class="section-label">⚙ VOX PROCESSING</span>
+    </div>
+    <div class="section-body" id="voxSec" style="max-height:600px">
+
+      <div class="slider-row">
+        <div class="slider-label">DRY / WET</div>
+        <div class="slider-wrap">
+          <input type="range" id="mixSlider" min="0" max="100" value="80"
+                 oninput="onSlider('mix', this.value)" aria-label="Dry wet mix">
+        </div>
+        <div class="slider-val" id="mixVal">80%</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">CARRIER Hz</div>
+        <div class="slider-wrap">
+          <input type="range" id="carrierSlider" min="60" max="400" value="110"
+                 oninput="onSlider('carrier', this.value)" aria-label="Carrier frequency">
+        </div>
+        <div class="slider-val" id="carrierVal">110</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">CARRIER VOL</div>
+        <div class="slider-wrap">
+          <input type="range" id="carrierVolSlider" min="0" max="100" value="100"
+                 oninput="onSlider('carrierVol', this.value)" aria-label="Carrier volume">
+        </div>
+        <div class="slider-val" id="carrierVolVal">100%</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">FILTER Q</div>
+        <div class="slider-wrap">
+          <input type="range" id="qSlider" min="1" max="20" value="8" step="0.5"
+                 oninput="onSlider('filterQ', this.value)" aria-label="Filter Q">
+        </div>
+        <div class="slider-val" id="qVal">8.0</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">ENVELOPE</div>
+        <div class="slider-wrap">
+          <input type="range" id="envSlider" min="1" max="100" value="20"
+                 oninput="onSlider('envSpeed', this.value)" aria-label="Envelope speed">
+        </div>
+        <div class="slider-val" id="envVal">20ms</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">OUTPUT VOL</div>
+        <div class="slider-wrap">
+          <input type="range" id="outputSlider" min="0" max="200" value="100"
+                 oninput="onSlider('outputGain', this.value)" aria-label="Output gain">
+        </div>
+        <div class="slider-val" id="outputVal">100%</div>
+      </div>
+
+    </div>
+
+    <!-- ── PRESETS ── -->
+    <div class="section-head" onclick="toggleSection('presetSec')">
+      <span class="section-label">🎖 VOICE PRESETS</span>
+    </div>
+    <div class="section-body" id="presetSec" style="max-height:600px">
+      <div class="btn-grid">
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('astartes')" aria-label="Space Marine">
+          <span class="btn-icon">🪖</span>
+          <span>SPACE MARINE</span>
+          <span class="btn-sub">STANDARD VOX</span>
+        </button>
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('terminator')" aria-label="Terminator">
+          <span class="btn-icon">⚔️</span>
+          <span>TERMINATOR</span>
+          <span class="btn-sub">DEEP IRON</span>
+        </button>
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('mechanicus')" aria-label="Adeptus Mechanicus">
+          <span class="btn-icon">⚙</span>
+          <span>MECHANICUS</span>
+          <span class="btn-sub">MACHINE CANT</span>
+        </button>
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('chaos')" aria-label="Chaos Corrupted">
+          <span class="btn-icon">☠</span>
+          <span>CHAOS TAINT</span>
+          <span class="btn-sub">WARP-TOUCHED</span>
+        </button>
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('dreadnought')" aria-label="Dreadnought">
+          <span class="btn-icon">🔥</span>
+          <span>DREADNOUGHT</span>
+          <span class="btn-sub">ANCIENT IRON</span>
+        </button>
+
+        <button class="grim-btn preset-btn" onclick="applyPreset('inquisitor')" aria-label="Inquisitor">
+          <span class="btn-icon">✝</span>
+          <span>INQUISITOR</span>
+          <span class="btn-sub">COLD AUTHORITY</span>
+        </button>
+
+      </div>
+      <div style="padding:4px 0 2px; font-size:9px; color:rgba(200,186,160,0.4); letter-spacing:0.1em; text-align:center" id="activePresetLabel">— NO PRESET ACTIVE —</div>
+    </div>
+
+    <!-- ── FX ── -->
+    <div class="section-head" onclick="toggleSection('fxSec')">
+      <span class="section-label">☠ WAR-FX RELICS</span>
+    </div>
+    <div class="section-body" id="fxSec" style="max-height:600px">
+
+      <div class="btn-grid">
+
+        <button class="grim-btn" id="crackleBtn" onclick="toggleEffect('crackle')" aria-label="Vox Crackle">
+          <span class="btn-icon">📡</span>
+          <span>VOX CRACKLE</span>
+          <span class="btn-sub">STATIC NOISE</span>
+        </button>
+
+        <button class="grim-btn" id="pitchBtn" onclick="toggleEffect('pitch')" aria-label="Pitch Shift">
+          <span class="btn-icon">🔱</span>
+          <span>PITCH SHIFT</span>
+          <span class="btn-sub">-1 OCTAVE</span>
+        </button>
+
+        <button class="grim-btn" id="reverbBtn" onclick="toggleEffect('reverb')" aria-label="Cathedral Reverb">
+          <span class="btn-icon">⛪</span>
+          <span>CATHEDRAL</span>
+          <span class="btn-sub">REVERB</span>
+        </button>
+
+        <button class="grim-btn" id="distBtn" onclick="toggleEffect('distortion')" aria-label="Warp Distortion">
+          <span class="btn-icon">💀</span>
+          <span>WARP DIST.</span>
+          <span class="btn-sub">CHAOS TAINT</span>
+        </button>
+
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">CRACKLE AMT</div>
+        <div class="slider-wrap">
+          <input type="range" id="crackleSlider" min="0" max="100" value="30"
+                 oninput="onSlider('crackleAmt', this.value)" aria-label="Crackle amount">
+        </div>
+        <div class="slider-val" id="crackleVal">30%</div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-label">REVERB DRY</div>
+        <div class="slider-wrap">
+          <input type="range" id="reverbSlider" min="0" max="100" value="50"
+                 oninput="onSlider('reverbWet', this.value)" aria-label="Reverb wet mix">
+        </div>
+        <div class="slider-val" id="reverbVal">50%</div>
+      </div>
+
+    </div>
+
+    <!-- ── SYSTEM ── -->
+    <div class="section-head" onclick="toggleSection('sysSec')">
+      <span class="section-label">⚙ SYSTEM LITANIES</span>
+    </div>
+    <div class="section-body" id="sysSec" style="max-height:400px">
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">LOW POWER MODE</div>
+          <div class="toggle-sub">6 BANDS — CONSERVE MACHINE SPIRIT</div>
+        </div>
+        <label class="rune-toggle" aria-label="Low power mode">
+          <input type="checkbox" id="lowPowerToggle" onchange="onLowPower(this.checked)">
+          <div class="rune-track"></div>
+          <div class="rune-thumb">⚙</div>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">SAWTOOTH CARRIER</div>
+          <div class="toggle-sub">ALT: SQUARE WAVE</div>
+        </div>
+        <label class="rune-toggle" aria-label="Carrier waveform">
+          <input type="checkbox" id="waveToggle" onchange="onWaveToggle(this.checked)" checked>
+          <div class="rune-track"></div>
+          <div class="rune-thumb">⚙</div>
+        </label>
+      </div>
+
+      <div class="btn-grid tri" style="padding-top:8px">
+        <button class="grim-btn" onclick="playPhrase()" aria-label="Vox Phrase">
+          <span class="btn-icon">📢</span>
+          <span>VOX</span>
+          <span class="btn-sub">PHRASE</span>
+        </button>
+        <button class="grim-btn" onclick="playSweep()" aria-label="Machine Spirit">
+          <span class="btn-icon">🔧</span>
+          <span>SPIRIT</span>
+          <span class="btn-sub">PING</span>
+        </button>
+        <button class="grim-btn" onclick="resetAll()" aria-label="Reset">
+          <span class="btn-icon">♻</span>
+          <span>RESET</span>
+          <span class="btn-sub">PURGE</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── TECH-PRIEST DIAGNOSTICS ── -->
+    <div class="section-head" onclick="toggleSection('diagSec')">
+      <span class="section-label">⚙ TECH-PRIEST DIAGNOSTICS</span>
+    </div>
+    <div class="section-body collapsed" id="diagSec" style="max-height:800px">
+
+      <div class="diag-row">
+        <span>CTX STATE</span><span class="diag-val" id="diagCtxState">—</span>
+      </div>
+      <div class="diag-row">
+        <span>SAMPLE RATE</span><span class="diag-val" id="diagSR">—</span>
+      </div>
+      <div class="diag-row">
+        <span>OUTPUT DEVICE</span><span class="diag-val" id="diagDev" style="max-width:55%;text-align:right;word-break:break-all">—</span>
+      </div>
+      <div class="diag-row">
+        <span>BT MODE ACTIVE</span><span class="diag-val" id="diagBtMode">NO</span>
+      </div>
+      <div class="diag-row">
+        <span>SILENCE WATCHDOG</span><span class="diag-val" id="diagWatchdog">OFF</span>
+      </div>
+
+      <div class="btn-grid" style="padding-top:8px">
+
+        <button class="grim-btn" onclick="btReconnect()" aria-label="Reconnect Bluetooth">
+          <span class="btn-icon">📶</span>
+          <span>RECONNECT</span>
+          <span class="btn-sub">RELINK SPEAKER</span>
+        </button>
+
+        <button class="grim-btn" onclick="playTestTone()" aria-label="Test Tone">
+          <span class="btn-icon">🔔</span>
+          <span>TEST TONE</span>
+          <span class="btn-sub">BYPASS VOCODER</span>
+        </button>
+
+        <button class="grim-btn" id="btModeBtn" onclick="toggleBtMode()" aria-label="Bluetooth Mode">
+          <span class="btn-icon">📡</span>
+          <span>BT MODE</span>
+          <span class="btn-sub">LOW LATENCY</span>
+        </button>
+
+        <button class="grim-btn" onclick="refreshDevices()" aria-label="Refresh Devices">
+          <span class="btn-icon">🔍</span>
+          <span>SCAN VOX</span>
+          <span class="btn-sub">LIST DEVICES</span>
+        </button>
+
+      </div>
+
+      <!-- Troubleshooting steps -->
+      <div class="diag-steps">
+        RECONNECT LITANY:<br>
+        I. Disable Bluetooth → Re-enable<br>
+        II. Tap RECONNECT above<br>
+        III. If silent: tap TEST TONE to verify speaker<br>
+        IV. Enable BT MODE to reduce buffer underruns<br>
+        V. On iOS: lock/unlock screen, retry vox-link
+      </div>
+
+    </div>
+
+    <div class="seal-divider">
+      <div class="seal-line"></div>
+      <div class="seal-icon">☩</div>
+      <div class="seal-line"></div>
+    </div>
+
+  </div><!-- /controls -->
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-phrase" id="phraseDisplay">« Ave Omnissiah »</div>
+    <button id="micToggle" onclick="toggleMic()" aria-label="Toggle microphone">
+      <span class="mic-icon" id="micIcon">🎙</span>
+      <span id="micLabel">ENGAGE VOX-LINK</span>
+    </button>
+  </footer>
+
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   IMPERIAL VOX · Audio Engine
+   ══════════════════════════════════════════════════════════════ */
+
+// ── STATE ─────────────────────────────────────────────────────
+let audioCtx = null;
+let micStream = null;
+let micSource = null;
+let micActive = false;
+let animFrameId = null;
+
+// Audio nodes
+let analyserIn  = null;
+let analyserOut = null;
+let vocoderOut  = null; // final gain node before destination
+
+// Vocoder nodes
+let carrierOsc    = null;
+let carrierGain   = null;
+let bandFiltersIn  = [];
+let bandFiltersCarrier = [];
+let envelopeFollowers  = [];
+let vcaGains           = [];
+let masterGainWet  = null;
+let masterGainDry  = null;
+
+// FX nodes
+let crackleNode   = null;
+let crackleGain   = null;
+let distNode      = null;
+let distGain      = null;
+let reverbNode    = null;  // ConvolverNode
+let reverbWetGain = null;
+let reverbDryGain = null;
+let pitchNode     = null;  // pitch via detune on carrier
+
+// Parameters
+const params = {
+  mix:        80,   // wet %
+  carrierFreq:110,
+  carrierVol: 100,  // raised: carrier should be loud
+  filterQ:    8,
+  envSpeed:   20,   // ms
+  crackleAmt: 30,
+  reverbWet:  50,
+  outputGain: 100,  // master output 0–200%
+  lowPower:   false,
+  waveform:   'sawtooth',
+};
+
+// Effects state
+const fx = {
+  crackle:    false,
+  pitch:      false,
+  reverb:     false,
+  distortion: false,
+};
+
+// Band frequencies (Hz) — log-spaced 200–7000
+function getBandFreqs(n) {
+  const lo = 200, hi = 7000;
+  return Array.from({length: n}, (_, i) =>
+    lo * Math.pow(hi / lo, i / (n - 1))
+  );
+}
+
+let NUM_BANDS = 12;
+
+// ── BLUETOOTH STATE ────────────────────────────────────────────
+// FIX: Track BT mode and silence watchdog
+let btMode = false;                // reduces bands/complexity for BT
+let silenceWatchdogTimer = null;   // fires if output is silent after mic starts
+let deviceChangeDebounce = null;   // debounce rapid devicechange events
+let preferredSinkId = '';          // last setSinkId target (Chrome Android)
+
+// ── SECTIONS COLLAPSE ─────────────────────────────────────────
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('collapsed');
+}
+
+// ── AUDIO CONTEXT ─────────────────────────────────────────────
+// FIX: Removed forced sampleRate:44100 — this was the primary BT bug.
+// Bluetooth A2DP on Android defaults to 44100 but SCO/HSP uses 8000/16000.
+// The browser negotiates the correct rate with the OS audio subsystem only
+// if we don't force it. Forcing 44100 causes a sample-rate mismatch when
+// the BT speaker reports a different native rate, resulting in silent output.
+function ensureContext() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+    latencyHint: btMode ? 'playback' : 'interactive',
+    // sampleRate intentionally omitted — let browser match BT device rate
+  });
+  // Update latency and sample rate display
+  document.getElementById('latDisp').textContent =
+    Math.round((audioCtx.baseLatency || 0) * 1000) + 'ms';
+  document.getElementById('btSampleRate').textContent = audioCtx.sampleRate + 'Hz';
+  document.getElementById('diagSR').textContent = audioCtx.sampleRate + 'Hz';
+  document.getElementById('diagCtxState').textContent = audioCtx.state.toUpperCase();
+  // FIX: listen for state changes (running/suspended/closed) — update diagnostics live
+  audioCtx.addEventListener('statechange', () => {
+    document.getElementById('diagCtxState').textContent = audioCtx.state.toUpperCase();
+  });
+}
+
+// FIX: Full resume + re-route sequence for BT reconnection
+async function resumeCtx() {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') {
+    await audioCtx.resume();
+  }
+  updateDiagnostics();
+}
+
+// ── BT RECONNECT ───────────────────────────────────────────────
+// FIX: Suspend → resume forces browser to re-negotiate with current
+// audio output device. This is the most reliable BT fix on Android Chrome.
+async function btReconnect() {
+  haptic(40);
+  setStatus('⚙ REESTABLISHING VOX COMMUNION…');
+  updateBtIndicator();
+
+  if (!audioCtx) {
+    ensureContext();
+    setStatus('VOX CONTEXT CONSECRATED · RETRY MIC LINK');
+    return;
+  }
+
+  // FIX: Suspend + close + recreate AudioContext so it picks up the new
+  // BT audio route. Simply resuming is not enough on some Android devices.
+  const wasActive = micActive;
+  if (wasActive) { stopMic(); }
+
+  try {
+    await audioCtx.suspend();
+  } catch(e) {}
+
+  // FIX: Close the old context entirely — this forces OS-level re-routing
+  try {
+    await audioCtx.close();
+  } catch(e) {}
+  audioCtx = null;
+
+  // Small delay so OS can complete the audio route switch
+  await new Promise(r => setTimeout(r, 400));
+
+  ensureContext();
+  await audioCtx.resume();
+
+  // FIX: setSinkId routes audio explicitly to chosen output on Chrome Android
+  if (preferredSinkId && typeof audioCtx.setSinkId === 'function') {
+    try {
+      await audioCtx.setSinkId(preferredSinkId);
+      setStatus('VOX REROUTED TO BLESSED SPEAKER · ' + preferredSinkId.slice(0,12));
+    } catch(e) {
+      setStatus('REROUTE FAILED: ' + e.message, true);
+    }
+  }
+
+  if (wasActive) {
+    await startMic();
+  } else {
+    setStatus('VOX RECONNECT COMPLETE · ENGAGE MIC TO SPEAK');
+  }
+
+  // Play a test ping so user can immediately verify output
+  setTimeout(() => playTestTone(true), 200);
+  updateDiagnostics();
+}
+
+// ── TEST TONE (bypasses vocoder entirely) ──────────────────────
+// FIX: Lets user confirm BT audio is working without needing mic.
+// Uses a simple sine wave direct to destination — no vocoder chain.
+function playTestTone(quiet = false) {
+  ensureContext();
+  resumeCtx();
+  haptic(20);
+
+  const t = audioCtx.currentTime;
+  const freqs = quiet ? [440] : [440, 554, 659]; // A, C#, E — major chord
+  freqs.forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    const startT = t + i * 0.08;
+    g.gain.setValueAtTime(0, startT);
+    g.gain.linearRampToValueAtTime(quiet ? 0.15 : 0.25, startT + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, startT + (quiet ? 0.4 : 0.7));
+    o.connect(g);
+    g.connect(audioCtx.destination); // direct — NOT through vocoderOut
+    o.start(startT);
+    o.stop(startT + (quiet ? 0.45 : 0.75));
+  });
+
+  if (!quiet) setStatus('TEST TONE TRANSMITTED · VERIFY ON SPEAKER');
+}
+
+// ── BLUETOOTH MODE TOGGLE ──────────────────────────────────────
+// FIX: BT mode reduces bands to 6 and uses 'playback' latency hint.
+// Bluetooth has ~100-200ms inherent latency; interactive mode causes
+// buffer underruns on slower BT chipsets, causing dropouts/silence.
+function toggleBtMode() {
+  haptic(30);
+  btMode = !btMode;
+  const btn = document.getElementById('btModeBtn');
+  btn.classList.toggle('active-effect', btMode);
+  document.getElementById('diagBtMode').textContent = btMode ? 'YES' : 'NO';
+
+  if (btMode) {
+    // Reduce band count for BT
+    params.lowPower = true;
+    document.getElementById('lowPowerToggle').checked = true;
+    setStatus('BT MODE ACTIVE · 6 BANDS · PLAYBACK LATENCY');
+  } else {
+    params.lowPower = false;
+    document.getElementById('lowPowerToggle').checked = false;
+    setStatus('BT MODE DEACTIVATED · STANDARD VOX RESTORED');
+  }
+
+  if (micActive) { teardownVocoder(); buildVocoder(); }
+  updateDiagnostics();
+}
+
+// ── DEVICE CHANGE LISTENER ────────────────────────────────────
+// FIX: fires when user connects/disconnects headphones or BT speaker.
+// We debounce and then auto-attempt reconnect so audio follows the device.
+if (navigator.mediaDevices) {
+  navigator.mediaDevices.addEventListener('devicechange', () => {
+    clearTimeout(deviceChangeDebounce);
+    deviceChangeDebounce = setTimeout(async () => {
+      await refreshDevices();
+      // If BT device newly appeared and mic is active, reconnect
+      if (micActive) {
+        setStatus('⚡ OUTPUT DEVICE CHANGED · RE-CONSECRATING…');
+        await btReconnect();
+      } else {
+        setStatus('⚡ OUTPUT DEVICE CHANGED · READY');
+      }
+    }, 800); // wait 800ms for OS to settle the route change
+  });
+}
+
+// ── DEVICE ENUMERATION ────────────────────────────────────────
+// FIX: Enumerate audio outputs so we can display BT device name
+// and potentially call setSinkId (Chrome Android).
+async function refreshDevices() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+    updateBtIndicator(null);
+    return;
+  }
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+    updateBtIndicator(outputs);
+
+    // Populate diag display
+    const activeOut = outputs.find(d => d.deviceId === 'default') || outputs[0];
+    if (activeOut) {
+      document.getElementById('diagDev').textContent =
+        activeOut.label || 'DEFAULT OUTPUT';
+    }
+  } catch(e) {
+    updateBtIndicator(null);
+  }
+}
+
+function updateBtIndicator(outputs) {
+  const icon = document.getElementById('btIcon');
+  const name = document.getElementById('btDevName');
+  const srEl = document.getElementById('btSampleRate');
+
+  if (audioCtx) {
+    srEl.textContent = audioCtx.sampleRate + 'Hz';
+    document.getElementById('diagSR').textContent = audioCtx.sampleRate + 'Hz';
+  }
+
+  if (!outputs || outputs.length === 0) {
+    icon.className = '';
+    icon.textContent = '🔊';
+    name.textContent = 'PHONE SPEAKER';
+    return;
+  }
+
+  // Look for a BT-labeled device
+  const btDev = outputs.find(d =>
+    /bluetooth|bt|wireless|airpod|buds|speaker|headset/i.test(d.label)
+  );
+
+  if (btDev) {
+    icon.textContent = '📶';
+    icon.className = 'bt-active';
+    name.textContent = btDev.label.toUpperCase().slice(0, 28);
+    preferredSinkId = btDev.deviceId;
+  } else {
+    icon.textContent = '🔊';
+    icon.className = '';
+    name.textContent = outputs[0]?.label?.toUpperCase().slice(0, 28) || 'PHONE SPEAKER';
+    preferredSinkId = '';
+  }
+}
+
+// ── SILENCE WATCHDOG ──────────────────────────────────────────
+// FIX: After mic starts, if output meter stays at 0 for 2s, it likely
+// means the BT device rerouted silently. Warn user and offer reconnect.
+function startSilenceWatchdog() {
+  clearTimeout(silenceWatchdogTimer);
+  document.getElementById('diagWatchdog').textContent = 'ACTIVE';
+  silenceWatchdogTimer = setTimeout(() => {
+    // Check if output analyser is getting signal
+    if (!analyserOut) return;
+    const d = new Uint8Array(analyserOut.frequencyBinCount);
+    analyserOut.getByteFrequencyData(d);
+    const peak = Math.max(...d);
+    if (peak < 5) {
+      // Silent output — BT may have rerouted
+      document.getElementById('btIcon').className = 'bt-warning';
+      document.getElementById('btWarnMsg').classList.add('visible');
+      setStatus('⚠ VOX OUTPUT SILENT — TAP RECONNECT IN DIAGNOSTICS', true);
+    } else {
+      document.getElementById('btWarnMsg').classList.remove('visible');
+    }
+  }, 2000);
+}
+
+function stopSilenceWatchdog() {
+  clearTimeout(silenceWatchdogTimer);
+  document.getElementById('diagWatchdog').textContent = 'OFF';
+  document.getElementById('btWarnMsg').classList.remove('visible');
+}
+
+// ── DIAGNOSTICS UPDATE ────────────────────────────────────────
+function updateDiagnostics() {
+  if (!audioCtx) return;
+  document.getElementById('diagCtxState').textContent = audioCtx.state.toUpperCase();
+  document.getElementById('diagSR').textContent = audioCtx.sampleRate + 'Hz';
+  document.getElementById('diagBtMode').textContent = btMode ? 'YES' : 'NO';
+  document.getElementById('btSampleRate').textContent = audioCtx.sampleRate + 'Hz';
+}
+
+
+// ── ACTIVATION OVERLAY ────────────────────────────────────────
+document.getElementById('activateBtn').addEventListener('click', () => {
+  ensureContext();
+  playSweep(); // machine spirit activation sound
+  const ov = document.getElementById('overlay');
+  ov.classList.add('hidden');
+  setTimeout(() => ov.style.display = 'none', 500);
+  haptic(50);
+  // FIX: Enumerate devices on activation so BT indicator is populated immediately
+  refreshDevices();
+  updateDiagnostics();
+});
+
+// ── MICROPHONE ────────────────────────────────────────────────
+async function toggleMic() {
+  resumeCtx();
+  haptic(30);
+
+  if (micActive) {
+    stopMic();
+  } else {
+    await startMic();
+  }
+}
+
+async function startMic() {
+  ensureContext();
+  // FIX: Refresh device list every time mic starts so BT name is current
+  await refreshDevices();
+  updateDiagnostics();
+  setStatus('REQUESTING VOX-LINK…');
+
+  // ── FIX: Force phone's built-in microphone ────────────────────
+  // Problem: when BT is connected, the OS switches the default audio input
+  // to the BT headset/speaker mic (HSP/HFP profile). getUserMedia({audio:true})
+  // therefore picks up the BT device mic, not your phone mic.
+  //
+  // Solution: enumerate audioinput devices, find the built-in phone mic by
+  // label heuristic, and request it explicitly by deviceId.
+  // If we can't identify it, fall back to { facingMode } + echoCancellation
+  // which at minimum prevents the feedback loop.
+  //
+  // Also: echoCancellation + noiseSuppression are CRITICAL here because
+  // the phone mic will pick up the BT speaker output otherwise.
+  let micConstraints = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
+    video: false,
+  };
+
+  try {
+    // First pass: get permission so labels are populated
+    const testStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    testStream.getTracks().forEach(t => t.stop()); // just needed for permission
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputs = devices.filter(d => d.kind === 'audioinput');
+
+    // Find built-in phone mic: NOT bluetooth, NOT headset, NOT external
+    // Android labels: "Built-in Microphone", "Phone Microphone", "Default"
+    // iOS labels are often blank until permission granted
+    const builtIn = inputs.find(d =>
+      /built.?in|phone|internal|default/i.test(d.label) &&
+      !/bluetooth|bt|wireless|headset|airpod|buds/i.test(d.label)
+    ) || inputs.find(d =>
+      // If no label matches, pick the one that ISN'T bluetooth
+      !/bluetooth|bt|wireless|headset|airpod|buds/i.test(d.label)
+    );
+
+    if (builtIn && builtIn.deviceId) {
+      micConstraints = {
+        audio: {
+          deviceId: { exact: builtIn.deviceId },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      };
+      document.getElementById('diagDev').textContent =
+        '🎤 ' + (builtIn.label || 'BUILT-IN MIC');
+      setStatus('PHONE MIC LOCKED · ' + (builtIn.label || 'BUILT-IN').toUpperCase().slice(0, 20));
+    } else {
+      setStatus('REQUESTING VOX-LINK (DEFAULT MIC)…');
+    }
+  } catch(enumErr) {
+    // Permission denied or enumerate failed — use default with echo cancel
+    setStatus('REQUESTING VOX-LINK…');
+  }
+
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia(micConstraints);
+  } catch (e) {
+    // If exact deviceId fails (some browsers/OS combos reject it), fall back
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: false,
+      });
+    } catch(e2) {
+      setStatus('VOX-LINK DENIED: ' + e2.message, true);
+      document.getElementById('statusDot').className = 'status-dot error';
+      return;
+    }
+  }
+
+  micSource = audioCtx.createMediaStreamSource(micStream);
+
+  // Show which mic is actually in use
+  const track = micStream.getAudioTracks()[0];
+  if (track) {
+    const settings = track.getSettings ? track.getSettings() : {};
+    const label = track.label || 'UNKNOWN MIC';
+    const isBT = /bluetooth|bt|wireless|headset|airpod|buds/i.test(label);
+    document.getElementById('btIcon').textContent = isBT ? '⚠' : '🎤';
+    document.getElementById('btIcon').className = isBT ? 'bt-warning' : 'bt-active';
+    if (isBT) {
+      document.getElementById('btWarnMsg').classList.add('visible');
+      document.getElementById('btWarnMsg').textContent =
+        '⚠ BT MIC DETECTED — TAP RECONNECT TO FORCE PHONE MIC';
+      setStatus('WARNING: BT MIC IN USE · RECONNECT TO FIX', true);
+    }
+    // Show mic label in diag
+    document.getElementById('diagDev').textContent = '🎤 ' + label.slice(0, 30);
+  }
+
+  buildVocoder();
+  micActive = true;
+
+  const btn = document.getElementById('micToggle');
+  btn.classList.add('mic-active');
+  document.getElementById('micLabel').textContent = 'DISENGAGE VOX-LINK';
+  document.getElementById('micIcon').textContent = '🔴';
+  document.getElementById('statusDot').className = 'status-dot active';
+  setStatus('VOX-LINK ESTABLISHED · SPEAKING FOR THE EMPEROR');
+
+  // FIX: Start silence watchdog to catch BT rerouting silently
+  startSilenceWatchdog();
+  startVisualizer();
+}
+
+function stopMic() {
+  if (micStream) {
+    micStream.getTracks().forEach(t => t.stop());
+    micStream = null;
+  }
+  teardownVocoder();
+  micActive = false;
+
+  const btn = document.getElementById('micToggle');
+  btn.classList.remove('mic-active');
+  document.getElementById('micLabel').textContent = 'ENGAGE VOX-LINK';
+  document.getElementById('micIcon').textContent = '🎙';
+  document.getElementById('statusDot').className = 'status-dot';
+  setStatus('VOX-LINK SEVERED · MACHINE SPIRIT RESTING');
+
+  // FIX: Stop the silence watchdog
+  stopSilenceWatchdog();
+  stopVisualizer();
+  clearMeters();
+}
+
+// ── VOCODER BUILDER ───────────────────────────────────────────
+function buildVocoder() {
+  if (!audioCtx || !micSource) return;
+
+  NUM_BANDS = params.lowPower ? 6 : 12;
+  document.getElementById('bandDisp').textContent = NUM_BANDS;
+
+  const freqs = getBandFreqs(NUM_BANDS);
+
+  // ── Master output gain → destination
+  // Makeup gain: vocoder bands each pass a fraction of signal,
+  // so we need ~4–5x gain to restore perceived loudness.
+  vocoderOut = audioCtx.createGain();
+  vocoderOut.gain.value = (params.outputGain / 100) * 4.0;
+  vocoderOut.connect(audioCtx.destination);
+
+  // ── Output analyser
+  analyserOut = audioCtx.createAnalyser();
+  analyserOut.fftSize = 256;
+  analyserOut.smoothingTimeConstant = 0.7;
+  vocoderOut.connect(analyserOut);
+
+  // ── Input analyser (for VU)
+  analyserIn = audioCtx.createAnalyser();
+  analyserIn.fftSize = 256;
+  analyserIn.smoothingTimeConstant = 0.7;
+  micSource.connect(analyserIn);
+
+  // ── Dry path
+  masterGainDry = audioCtx.createGain();
+  masterGainDry.gain.value = (100 - params.mix) / 100;
+  micSource.connect(masterGainDry);
+  masterGainDry.connect(vocoderOut);
+
+  // ── Carrier oscillator
+  carrierOsc = audioCtx.createOscillator();
+  carrierOsc.type = params.waveform;
+  carrierOsc.frequency.value = params.carrierFreq;
+  if (fx.pitch) carrierOsc.detune.value = -1200; // -1 octave
+
+  carrierGain = audioCtx.createGain();
+  carrierGain.gain.value = params.carrierVol / 100;
+
+  carrierOsc.connect(carrierGain);
+  carrierOsc.start();
+
+  // ── Wet master
+  masterGainWet = audioCtx.createGain();
+  masterGainWet.gain.value = params.mix / 100;
+
+  // ── Optional reverb chain
+  if (fx.reverb) {
+    const [convolver, wG, dG] = makeReverb();
+    reverbNode   = convolver;
+    reverbWetGain = wG;
+    reverbDryGain = dG;
+    masterGainWet.connect(reverbDryGain);
+    masterGainWet.connect(reverbNode);
+    reverbNode.connect(reverbWetGain);
+    reverbWetGain.connect(vocoderOut);
+    reverbDryGain.connect(vocoderOut);
+  } else {
+    masterGainWet.connect(vocoderOut);
+  }
+
+  // ── Optional distortion
+  if (fx.distortion) {
+    distNode = audioCtx.createWaveShaper();
+    distNode.curve = makeDistCurve(400);
+    distNode.oversample = '2x';
+    distGain = audioCtx.createGain();
+    distGain.gain.value = 0.7;
+    // insert before vocoderOut by reconnecting masterGainWet
+    masterGainWet.disconnect();
+    masterGainWet.connect(distNode);
+    distNode.connect(distGain);
+    if (fx.reverb) {
+      distGain.connect(reverbDryGain);
+      distGain.connect(reverbNode);
+    } else {
+      distGain.connect(vocoderOut);
+    }
+  }
+
+  // ── Optional crackle
+  if (fx.crackle) {
+    const [src, gn] = makeCrackle();
+    crackleNode = src;
+    crackleGain = gn;
+    crackleGain.connect(vocoderOut);
+    src.start();
+  }
+
+  // ── Band vocoder core ─────────────────────────────────────
+  bandFiltersIn      = [];
+  bandFiltersCarrier = [];
+  envelopeFollowers  = [];
+  vcaGains           = [];
+
+  const envSmooth = Math.max(0.001, params.envSpeed / 1000);
+
+  freqs.forEach(freq => {
+    // Modulator band
+    const bpMod = audioCtx.createBiquadFilter();
+    bpMod.type = 'bandpass';
+    bpMod.frequency.value = freq;
+    bpMod.Q.value = params.filterQ;
+    micSource.connect(bpMod);
+
+    // Envelope follower: full-wave rectify approximated by WaveShaper → LPF
+    const rect = audioCtx.createWaveShaper();
+    rect.curve = makeRectCurve();
+    bpMod.connect(rect);
+
+    const lpf = audioCtx.createBiquadFilter();
+    lpf.type = 'lowpass';
+    lpf.frequency.value = 1 / envSmooth; // cutoff ~ envelope speed
+    rect.connect(lpf);
+
+    // Carrier band
+    const bpCar = audioCtx.createBiquadFilter();
+    bpCar.type = 'bandpass';
+    bpCar.frequency.value = freq;
+    bpCar.Q.value = params.filterQ;
+    carrierGain.connect(bpCar);
+
+    // VCA: gain controlled by envelope
+    const vca = audioCtx.createGain();
+    vca.gain.value = 0;
+
+    // Connect envelope → VCA gain (AudioParam modulation)
+    lpf.connect(vca.gain);
+
+    // Carrier → VCA → wet master
+    bpCar.connect(vca);
+    vca.connect(masterGainWet);
+
+    bandFiltersIn.push(bpMod);
+    bandFiltersCarrier.push(bpCar);
+    envelopeFollowers.push({ rect, lpf });
+    vcaGains.push(vca);
+  });
+
+  document.getElementById('freqDisp').textContent = params.carrierFreq + 'Hz';
+}
+
+function teardownVocoder() {
+  // Stop oscillators/sources
+  try { carrierOsc && carrierOsc.stop(); } catch(e) {}
+  try { crackleNode && crackleNode.stop(); } catch(e) {}
+
+  // Disconnect everything — just disconnect source to sever the graph
+  try { micSource && micSource.disconnect(); } catch(e) {}
+  try { vocoderOut && vocoderOut.disconnect(); } catch(e) {}
+
+  // Null out
+  carrierOsc = carrierGain = masterGainWet = masterGainDry = null;
+  vocoderOut = analyserIn = analyserOut = null;
+  crackleNode = crackleGain = null;
+  distNode = distGain = null;
+  reverbNode = reverbWetGain = reverbDryGain = null;
+  bandFiltersIn = []; bandFiltersCarrier = []; vcaGains = [];
+  envelopeFollowers = [];
+  micSource = null;
+}
+
+// ── HALF-WAVE RECT CURVE ──────────────────────────────────────
+function makeRectCurve() {
+  const n = 256;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = Math.abs(x); // full-wave rectify
+  }
+  return curve;
+}
+
+// ── DISTORTION CURVE ──────────────────────────────────────────
+function makeDistCurve(amount) {
+  const n = 256;
+  const curve = new Float32Array(n);
+  const k = amount;
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
+}
+
+// ── SIMPLE SYNTHETIC REVERB (noise convolver) ─────────────────
+function makeReverb() {
+  const len = audioCtx.sampleRate * 2.5;
+  const buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const data = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+    }
+  }
+  const conv = audioCtx.createConvolver();
+  conv.buffer = buf;
+  const wG = audioCtx.createGain();
+  wG.gain.value = params.reverbWet / 100;
+  const dG = audioCtx.createGain();
+  dG.gain.value = 1 - params.reverbWet / 100;
+  return [conv, wG, dG];
+}
+
+// ── CRACKLE NOISE ─────────────────────────────────────────────
+function makeCrackle() {
+  const bufLen = audioCtx.sampleRate * 2;
+  const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) {
+    // sparse crackle: mostly silence, occasional spike
+    data[i] = Math.random() < 0.003 ? (Math.random() * 2 - 1) : 0;
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  const gn = audioCtx.createGain();
+  gn.gain.value = params.crackleAmt / 100 * 0.4;
+  src.connect(gn);
+  return [src, gn];
+}
+
+// ── MACHINE SPIRIT SWEEP ──────────────────────────────────────
+function playSweep() {
+  ensureContext();
+  resumeCtx();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(80, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(3000, audioCtx.currentTime + 0.3);
+  o.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
+  g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime);
+  o.stop(audioCtx.currentTime + 0.6);
+  haptic(60);
+}
+
+// ── VOX PHRASES ───────────────────────────────────────────────
+const VOX_PHRASES = [
+  'For the Emperor!',
+  'Faith is eternal.',
+  'Suffer not the unclean to live.',
+  'The Machine Spirit guides my voice.',
+  'Ave Omnissiah.',
+  'Death to the enemies of Mankind.',
+  'By the Throne of Terra.',
+  'In the name of the Holy Omnissiah.',
+];
+let phraseIdx = 0;
+
+function playPhrase() {
+  resumeCtx();
+  haptic(30);
+  phraseIdx = (phraseIdx + Math.floor(Math.random() * VOX_PHRASES.length)) % VOX_PHRASES.length;
+  const phrase = VOX_PHRASES[phraseIdx];
+  document.getElementById('phraseDisplay').textContent = '« ' + phrase + ' »';
+
+  // Synth voice: quick glide chord
+  ensureContext();
+  const t = audioCtx.currentTime;
+  [110, 220, 330].forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.06, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start(t + i * 0.04);
+    o.stop(t + 0.85);
+  });
+}
+
+// ── PARAMETER HANDLERS ────────────────────────────────────────
+function onSlider(name, value) {
+  value = parseFloat(value);
+  params[name] = value;
+
+  switch(name) {
+    case 'mix':
+      document.getElementById('mixVal').textContent = value + '%';
+      if (masterGainWet) masterGainWet.gain.value = value / 100;
+      if (masterGainDry) masterGainDry.gain.value = (100 - value) / 100;
+      break;
+    case 'carrier':
+      document.getElementById('carrierVal').textContent = value;
+      document.getElementById('freqDisp').textContent = value + 'Hz';
+      if (carrierOsc) carrierOsc.frequency.linearRampToValueAtTime(value, audioCtx.currentTime + 0.05);
+      break;
+    case 'carrierVol':
+      document.getElementById('carrierVolVal').textContent = value + '%';
+      if (carrierGain) carrierGain.gain.value = value / 100;
+      break;
+    case 'outputGain':
+      document.getElementById('outputVal').textContent = value + '%';
+      if (vocoderOut) vocoderOut.gain.value = (value / 100) * 4.0;
+      break;
+    case 'filterQ':
+      document.getElementById('qVal').textContent = parseFloat(value).toFixed(1);
+      bandFiltersIn.forEach(f => f.Q.value = value);
+      bandFiltersCarrier.forEach(f => f.Q.value = value);
+      break;
+    case 'envSpeed':
+      document.getElementById('envVal').textContent = value + 'ms';
+      // Envelope LPF cutoff: ~1/τ
+      envelopeFollowers.forEach(ef => ef.lpf.frequency.value = 1000 / value);
+      break;
+    case 'crackleAmt':
+      document.getElementById('crackleVal').textContent = value + '%';
+      if (crackleGain) crackleGain.gain.value = value / 100 * 0.4;
+      break;
+    case 'reverbWet':
+      document.getElementById('reverbVal').textContent = value + '%';
+      if (reverbWetGain) reverbWetGain.gain.value = value / 100;
+      if (reverbDryGain) reverbDryGain.gain.value = 1 - value / 100;
+      break;
+  }
+}
+
+function toggleEffect(name) {
+  resumeCtx();
+  haptic(25);
+  fx[name] = !fx[name];
+  const btn = document.getElementById(name + 'Btn');
+  btn.classList.toggle('active-effect', fx[name]);
+
+  // If mic is live, rebuild the graph to apply
+  if (micActive) {
+    teardownVocoder();
+    buildVocoder();
+  }
+
+  // Crackle glitch visual
+  if (name === 'crackle' && fx[name]) triggerGlitch();
+}
+
+function onLowPower(checked) {
+  resumeCtx();
+  params.lowPower = checked;
+  if (micActive) { teardownVocoder(); buildVocoder(); }
+}
+
+function onWaveToggle(checked) {
+  resumeCtx();
+  params.waveform = checked ? 'sawtooth' : 'square';
+  if (carrierOsc) carrierOsc.type = params.waveform;
+}
+
+function resetAll() {
+  resumeCtx();
+  haptic(40);
+  // Reset sliders to defaults
+  document.getElementById('mixSlider').value = 80;       onSlider('mix', 80);
+  document.getElementById('carrierSlider').value = 110;  onSlider('carrier', 110);
+  document.getElementById('carrierVolSlider').value = 100;onSlider('carrierVol', 100);
+  document.getElementById('qSlider').value = 8;          onSlider('filterQ', 8);
+  document.getElementById('envSlider').value = 20;       onSlider('envSpeed', 20);
+  document.getElementById('crackleSlider').value = 30;   onSlider('crackleAmt', 30);
+  document.getElementById('reverbSlider').value = 50;    onSlider('reverbWet', 50);
+  document.getElementById('outputSlider').value = 100;   onSlider('outputGain', 100);
+  // Reset FX
+  Object.keys(fx).forEach(k => {
+    if (fx[k]) toggleEffect(k);
+  });
+  setStatus('SYSTEM PURGED · LITANIES OF RESET COMPLETE');
+}
+
+// ── PRESETS ───────────────────────────────────────────────────
+const PRESETS = {
+  astartes: {
+    name: 'SPACE MARINE — STANDARD VOX',
+    mix: 90, carrierFreq: 110, carrierVol: 100, filterQ: 8,
+    envSpeed: 15, outputGain: 120, waveform: 'sawtooth',
+    fx: { crackle: true, pitch: false, reverb: false, distortion: false },
+    crackleAmt: 20, reverbWet: 30,
+  },
+  terminator: {
+    name: 'TERMINATOR — DEEP IRON',
+    mix: 95, carrierFreq: 65, carrierVol: 100, filterQ: 6,
+    envSpeed: 30, outputGain: 150, waveform: 'sawtooth',
+    fx: { crackle: true, pitch: true, reverb: false, distortion: false },
+    crackleAmt: 25, reverbWet: 30,
+  },
+  mechanicus: {
+    name: 'ADEPTUS MECHANICUS — MACHINE CANT',
+    mix: 100, carrierFreq: 180, carrierVol: 100, filterQ: 14,
+    envSpeed: 8, outputGain: 130, waveform: 'square',
+    fx: { crackle: true, pitch: false, reverb: false, distortion: true },
+    crackleAmt: 40, reverbWet: 20,
+  },
+  chaos: {
+    name: 'CHAOS TAINT — WARP-TOUCHED',
+    mix: 85, carrierFreq: 95, carrierVol: 100, filterQ: 5,
+    envSpeed: 50, outputGain: 140, waveform: 'sawtooth',
+    fx: { crackle: true, pitch: true, reverb: true, distortion: true },
+    crackleAmt: 60, reverbWet: 60,
+  },
+  dreadnought: {
+    name: 'DREADNOUGHT — ANCIENT IRON',
+    mix: 98, carrierFreq: 55, carrierVol: 100, filterQ: 4,
+    envSpeed: 45, outputGain: 160, waveform: 'sawtooth',
+    fx: { crackle: true, pitch: true, reverb: true, distortion: false },
+    crackleAmt: 35, reverbWet: 50,
+  },
+  inquisitor: {
+    name: 'INQUISITOR — COLD AUTHORITY',
+    mix: 80, carrierFreq: 130, carrierVol: 100, filterQ: 12,
+    envSpeed: 10, outputGain: 110, waveform: 'sawtooth',
+    fx: { crackle: false, pitch: false, reverb: true, distortion: false },
+    crackleAmt: 10, reverbWet: 35,
+  },
+};
+
+function applyPreset(name) {
+  resumeCtx();
+  haptic(40);
+  const p = PRESETS[name];
+  if (!p) return;
+
+  // Clear active FX first
+  Object.keys(fx).forEach(k => { if (fx[k]) { fx[k] = false; document.getElementById(k + 'Btn').classList.remove('active-effect'); } });
+
+  // Apply params
+  const setSlider = (id, val, sliderName, displayId, fmt) => {
+    document.getElementById(id).value = val;
+    params[sliderName] = val;
+    document.getElementById(displayId).textContent = fmt(val);
+  };
+
+  setSlider('mixSlider',       p.mix,        'mix',        'mixVal',        v => v + '%');
+  setSlider('carrierSlider',   p.carrierFreq,'carrierFreq','carrierVal',    v => v);
+  setSlider('carrierVolSlider',p.carrierVol, 'carrierVol', 'carrierVolVal', v => v + '%');
+  setSlider('qSlider',         p.filterQ,    'filterQ',    'qVal',          v => parseFloat(v).toFixed(1));
+  setSlider('envSlider',       p.envSpeed,   'envSpeed',   'envVal',        v => v + 'ms');
+  setSlider('crackleSlider',   p.crackleAmt, 'crackleAmt', 'crackleVal',   v => v + '%');
+  setSlider('reverbSlider',    p.reverbWet,  'reverbWet',  'reverbVal',     v => v + '%');
+  setSlider('outputSlider',    p.outputGain, 'outputGain', 'outputVal',     v => v + '%');
+
+  params.waveform = p.waveform;
+  const wt = document.getElementById('waveToggle');
+  wt.checked = p.waveform === 'sawtooth';
+
+  // Apply FX buttons
+  Object.keys(p.fx).forEach(k => {
+    fx[k] = p.fx[k];
+    document.getElementById(k + 'Btn').classList.toggle('active-effect', fx[k]);
+  });
+
+  // Highlight active preset button
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active-effect'));
+  event.currentTarget.classList.add('active-effect');
+  document.getElementById('activePresetLabel').textContent = '— ' + p.name + ' —';
+
+  // Rebuild if mic active
+  if (micActive) { teardownVocoder(); buildVocoder(); }
+  else { setStatus('PRESET LOADED: ' + p.name); }
+}
+
+// ── VISUALIZER ────────────────────────────────────────────────
+const canvas = document.getElementById('vizCanvas');
+const ctx2d  = canvas.getContext('2d');
+const dataIn  = new Uint8Array(64);
+const dataOut = new Uint8Array(64);
+
+function resizeCanvas() {
+  canvas.width  = canvas.offsetWidth  * devicePixelRatio;
+  canvas.height = canvas.offsetHeight * devicePixelRatio;
+}
+
+function startVisualizer() {
+  resizeCanvas();
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  drawFrame();
+}
+function stopVisualizer() {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawFrame() {
+  animFrameId = requestAnimationFrame(drawFrame);
+
+  const W = canvas.width, H = canvas.height;
+  ctx2d.clearRect(0, 0, W, H);
+  ctx2d.fillStyle = 'rgba(8,4,2,0.6)';
+  ctx2d.fillRect(0, 0, W, H);
+
+  if (analyserIn) {
+    analyserIn.getByteFrequencyData(dataIn);
+    drawBars(dataIn, W, H, '#8B0000', 'rgba(180,0,0,0.3)', true);
+    updateMeter(dataIn, 'inMeterFill');
+  }
+  if (analyserOut) {
+    analyserOut.getByteFrequencyData(dataOut);
+    drawBars(dataOut, W, H, '#D4AF37', 'rgba(212,175,55,0.15)', false);
+    updateMeter(dataOut, 'outMeterFill');
+  }
+}
+
+function drawBars(data, W, H, color, glow, flip) {
+  const n = 32;
+  const bw = W / n - 1;
+  ctx2d.fillStyle = color;
+  for (let i = 0; i < n; i++) {
+    const v = data[i] / 255;
+    const h = v * H * 0.9;
+    const x = i * (W / n);
+    const y = flip ? H - h : 0;
+    ctx2d.globalAlpha = 0.8;
+    ctx2d.fillRect(x, y, bw, h);
+  }
+  ctx2d.globalAlpha = 1;
+}
+
+function updateMeter(data, id) {
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i];
+  const rms = sum / data.length / 255;
+  document.getElementById(id).style.width = Math.min(100, rms * 300) + '%';
+}
+
+function clearMeters() {
+  document.getElementById('inMeterFill').style.width  = '0%';
+  document.getElementById('outMeterFill').style.width = '0%';
+}
+
+// ── GLITCH EFFECT ─────────────────────────────────────────────
+let glitchTimer = null;
+function triggerGlitch() {
+  const ov = document.getElementById('glitchOverlay');
+  ov.innerHTML = '';
+  ov.style.opacity = '1';
+  const lines = 4 + Math.floor(Math.random() * 5);
+  for (let i = 0; i < lines; i++) {
+    const line = document.createElement('div');
+    line.className = 'glitch-line';
+    line.style.top = Math.random() * 100 + '%';
+    line.style.opacity = Math.random() * 0.8 + 0.2 + '';
+    ov.appendChild(line);
+  }
+  clearTimeout(glitchTimer);
+  glitchTimer = setTimeout(() => {
+    ov.style.opacity = '0';
+    ov.innerHTML = '';
+  }, 150);
+}
+
+// Periodic glitch when crackle is on
+setInterval(() => {
+  if (fx.crackle && micActive && Math.random() < 0.15) triggerGlitch();
+}, 2000);
+
+// ── HAPTIC ────────────────────────────────────────────────────
+function haptic(ms) {
+  try { navigator.vibrate && navigator.vibrate(ms); } catch(e) {}
+}
+
+// ── STATUS ────────────────────────────────────────────────────
+function setStatus(msg, isErr = false) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = isErr ? 'err' : '';
+}
+
+// ── PREVENT PULL-TO-REFRESH ───────────────────────────────────
+document.addEventListener('touchmove', e => {
+  if (e.target.closest('#controls')) return; // allow inside controls
+  e.preventDefault();
+}, { passive: false });
+
+// ── PASSIVE SCROLL LISTENERS (controls) ───────────────────────
+document.getElementById('controls').addEventListener('touchstart', () => {}, { passive: true });
+document.getElementById('controls').addEventListener('touchmove',  () => {}, { passive: true });
+
+// ── RESIZE ────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (micActive) resizeCanvas();
+});
+
+// ── WEB AUDIO FALLBACK ────────────────────────────────────────
+if (!window.AudioContext && !window.webkitAudioContext) {
+  document.getElementById('overlay').innerHTML =
+    '<div style="padding:40px;text-align:center;color:#D4AF37;font-family:monospace">' +
+    '<div style="font-size:40px">☠</div>' +
+    '<div style="margin-top:16px;font-size:14px;letter-spacing:0.1em">' +
+    'THIS COGITATOR LACKS THE SACRED WEB AUDIO API.<br>' +
+    'THE MACHINE SPIRIT CANNOT BE INVOKED.<br><br>' +
+    'USE CHROME OR SAFARI FOR VOX COMMUNION.' +
+    '</div></div>';
+}
+</script>
+</body>
+</html>
